@@ -96,7 +96,7 @@ const fetchAndSave = async (subReddit, postId) => {
     await page.setCookie(...cookies);
 
     const topDivs = `div.SubredditVars-r-${subReddit}`;
-    await page.goto(`https://www.reddit.com/r/uwaterloo/comments/${postId}/?sort=top`,
+    await page.goto(`https://www.reddit.com/r/${subReddit}/comments/${postId}/?sort=top`,
                     {waitUntil: 'domcontentloaded'});
     await page.waitForSelector(`${topDivs}:nth-of-type(2) div`);
 
@@ -112,8 +112,11 @@ const fetchAndSave = async (subReddit, postId) => {
         dom.style['margin-top'] = '0px';
 
         let nodes = document.querySelectorAll('div[data-test-id="post-content"] > div');
-        nodes[4].style['display'] = 'none';
-        nodes[5].style['display'] = 'none';
+
+        if (nodes.length == 6) { // post with tags
+            nodes[nodes.length-2].style['display'] = 'none';
+        }
+        nodes[nodes.length-1].style['display'] = 'none';
 
         // Delete top of title
         dom = document.querySelector(`${topDivs}:nth-of-type(2) div div div div:nth-of-type(2) div`);
@@ -135,8 +138,8 @@ const fetchAndSave = async (subReddit, postId) => {
     // Re-display the post-content text and comment numbers
     await page.evaluate(() => {
         let nodes = document.querySelectorAll('div[data-test-id="post-content"] > div');
-        nodes[4].style['display'] = 'block';
-        // nodes[5].style['display'] = 'block';
+        nodes[nodes.length-2].style['display'] = 'block';
+        // nodes[nodes.length-1].style['display'] = 'block';
     });
 
     const nodes = await page.$$('div[data-test-id="post-content"] > div');
