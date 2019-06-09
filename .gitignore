@@ -186,3 +186,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# generated stuff
+img/*
+text/*
