@@ -1,6 +1,8 @@
 {
     "username": "Reddit_Rover_",
     "password": "PEpw4&A%buAVmetkx@w!l%HzH2GPEXVz",
+    "client_id": "p_QH2tyER07oHg",
+    "client_secret": "e-AfeUZ0eiazIKF4ev6c7ecHYwE",
     "COOKIE_PATH": "./cache/cookies.json",
-    "OUTPUT_FOLDER": "./output"
+    "METADATA_DIR": "text"
 }

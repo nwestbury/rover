@@ -76,7 +76,7 @@ const fetchAndSave = async (subReddit, postId) => {
     mkdirIfNotExists(rootImgPath);
 
     // Fetch the screenshot from the specified subreddit page
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: false});
 
     const context = browser.defaultBrowserContext();
     await context.overridePermissions('https://www.reddit.com', ['notifications']);
@@ -205,10 +205,13 @@ const fetchAndSave = async (subReddit, postId) => {
 
         if (para_sentences.length == 0) continue; // ignore non-comments (expand buttons)
 
+        const commentDescriptionSpan = await page.evaluateHandle(div => div.querySelector('div:nth-of-type(2) > span'), comments[i]);
+        const level = await page.evaluate(x => x.textContent, commentDescriptionSpan)
         const classNamePromise = await comments[i].getProperty('className');
         const className = await classNamePromise.jsonValue();
+        const isTopLevelComment = level === 'level 1' || className.includes('top-level');
 
-        sub_comment_index = className.includes('top-level') ? 0 : sub_comment_index + 1;
+        sub_comment_index = isTopLevelComment ? 0 : sub_comment_index + 1;
         if (sub_comment_index > maxSubComments) continue;
 
         let sentence_index = 0;
@@ -227,7 +230,7 @@ const fetchAndSave = async (subReddit, postId) => {
                 await page.evaluate((pars, j, para_sentence) => { pars[j].innerHTML = para_sentence }, pars, j, para_sentence);
 
                 let boundingBox = await comments[i].boundingBox();
-                if (!className.includes('top-level')) {
+                if (!isTopLevelComment) {
                     boundingBox.x = topBoundBox.x;
                     boundingBox.y = topBoundBox.y;
                     boundingBox.width = topBoundBox.width;
@@ -241,7 +244,7 @@ const fetchAndSave = async (subReddit, postId) => {
             }
         }
 
-        if (className.includes('top-level')) {
+        if (isTopLevelComment) {
             topBoundBox = await comments[i].boundingBox();
             ++top_level_comment_index;
         } else {
