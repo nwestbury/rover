@@ -190,3 +190,4 @@ venv.bak/
 # generated stuff
 img/*
 text/*
+tmp/*

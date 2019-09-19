@@ -143,7 +143,7 @@ const fetchAndSave = async (subReddit, postId) => {
     });
 
     const nodes = await page.$$('div[data-test-id="post-content"] > div');
-    const title = await page.evaluate(div => div.textContent.trim(), nodes[2]);
+    const title = await page.evaluate(div => div.querySelector('div').textContent.trim(), nodes[2]);
     let pars = await page.evaluateHandle(div => div.querySelectorAll('div > p, ul > li'), nodes[4]);
 
     // Hide paragraphs, get text

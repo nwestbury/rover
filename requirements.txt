@@ -1,2 +1,5 @@
 praw
 icrawler
+moviepy
+pypiwin32
+pyttsx3
