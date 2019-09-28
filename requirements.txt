@@ -1,5 +1,6 @@
 praw
 icrawler
 moviepy
-pypiwin32
+# pypiwin32
 pyttsx3
+gtts
