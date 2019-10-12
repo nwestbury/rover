@@ -197,7 +197,7 @@ const fetchAndSave = async (subReddit, postId) => {
         const [split_sentences, para_sentences] = await page.evaluate((pars) => {
             const text = [];
             for (const p of pars) {
-                text.push(p.textContent);
+                if (p.textContent) text.push(p.textContent);
                 p.style['display'] = 'none';
             }
             return split_paragraphs(text);

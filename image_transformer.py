@@ -6,13 +6,13 @@ class ImageTransformer():
         self.height = 1980
         self.background_color = (26, 26, 26)
 
-    def test(self, img):
+    def save_new_image(self, img, path):
         image = Image.open(img)
         new_image = Image.new('RGB', (self.height, self.width), self.background_color)
         new_image.paste(image)
-        new_image.save('test.jpeg')
+        new_image.save(path)
 
 
 if __name__ == '__main__':
     imgt = ImageTransformer()
-    imgt.test('img/IAmA_dahvhb/comment1_level1_frame0.jpeg')
+    imgt.save_new_image('img/IAmA_dguq41/comment1_level1_frame0.jpeg', 'tmp/omg.jpeg')
