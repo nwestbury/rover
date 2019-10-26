@@ -47,6 +47,7 @@ const split_paragraphs = (paras) => {
     let flattened_sentences = [];
     const para_sentences = paras.map((para) => {
         const split = para.match(sentence_regex);
+        if (!split) return [];
 
         let prev = "";
         const sentences = split.map((sentence) => {
