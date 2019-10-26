@@ -2,6 +2,7 @@ import logging
 import os
 from moviepy.editor import *
 from gtts import gTTS
+from PIL import Image
 
 from image_transformer import ImageTransformer
 
@@ -10,6 +11,13 @@ logger = logging.getLogger('video_merger')
 class VideoMerger():
     def __init__(self):
         self.imageTransformer = ImageTransformer()
+
+    def get_height_largest(self, submission_frames):
+        im = Image.open()
+        width, height = im.size
+
+    def get_last_frame_of_type(self, submission):
+        pass
 
     def load_frames(self, submission_frames):
         if not os.path.exists('tmp'):
@@ -32,8 +40,6 @@ class VideoMerger():
                 clip = ImageClip(fp2, duration=audio_clip.duration)
                 clip.set_audio(audio_clip)
                 clips.append(clip)
-
-            print('sub', submission)
 
             vp = os.path.join('tmp', 'test.mp4')
             logger.info('Creating video file %s', vp)

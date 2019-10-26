@@ -158,7 +158,7 @@ const fetchAndSave = async (subReddit, postId) => {
     }, pars);
 
 
-    const rows = [{name: 'title', type: 'title', path: `${rootImgPath}/title.jpeg`, text: title}];
+    const rows = [{name: 'title', type: 'title', path: `${rootImgPath}/title.jpeg`, text: title, group: 0}];
 
     let sentence_index = 0;
     for (var i=0; i<para_sentences.length; ++i) {
@@ -175,7 +175,7 @@ const fetchAndSave = async (subReddit, postId) => {
             await page.evaluate((pars, i, para_sentence) => { pars[i].innerHTML = para_sentence }, pars, i, para_sentence);
             await titleDiv.screenshot({path, quality: 100});
 
-            rows.push({name, type: 'post', path, text});
+            rows.push({name, type: 'post', path, text, group: 1});
             ++sentence_index;
         }
     }
@@ -223,7 +223,7 @@ const fetchAndSave = async (subReddit, postId) => {
             }, pars, j);
 
             for (const para_sentence of para_sentences[j]) {
-                const name = `comment${comment_index}_level${sub_comment_index}_frame${sentence_index}`;
+                const name = `comment${top_level_comment_index}_level${sub_comment_index}_frame${sentence_index}`;
                 const path = `${rootImgPath}/${name}.jpeg`;
                 const text = split_sentences[sentence_index].trim();
 
@@ -240,7 +240,7 @@ const fetchAndSave = async (subReddit, postId) => {
 
                 await page.screenshot({path, quality: 100, clip: boundingBox});
 
-                rows.push({name, type: 'comment', path, text});
+                rows.push({name, type: 'comment', path, text, group: top_level_comment_index + 2});
                 ++sentence_index;
             }
         }
@@ -258,7 +258,7 @@ const fetchAndSave = async (subReddit, postId) => {
 
     const csvWriter = createCsvWriter({  
         path: `text/${subReddit}_${postId}.csv`,
-        header: [{id: 'name', title: 'Name'}, {id: 'type', title: 'Type'}, {id: 'path', title: 'Path'}, {id: 'text', title: 'Text'}]
+        header: [{id: 'name', title: 'Name'}, {id: 'type', title: 'Type'}, {id: 'path', title: 'Path'}, {id: 'text', title: 'Text'}, {id: 'group', title: 'Group'}]
     });
 
     await csvWriter.writeRecords(rows);
