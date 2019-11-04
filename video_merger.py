@@ -36,9 +36,8 @@ class VideoMerger():
                 audio_clip = AudioFileClip(fp)
 
                 self.imageTransformer.save_new_image(frame['Path'], fp2)
-
                 clip = ImageClip(fp2, duration=audio_clip.duration)
-                clip.set_audio(audio_clip)
+                clip = clip.set_audio(audio_clip)
                 clips.append(clip)
 
             vp = os.path.join('tmp', 'test.mp4')
