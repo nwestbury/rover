@@ -22,4 +22,4 @@ class ImageTransformer():
 
 if __name__ == '__main__':
     imgt = ImageTransformer()
-    imgt.save_new_image('img/IAmA_dguq41/comment1_level1_frame0.jpeg', 'tmp/omg.jpeg')
+    imgt.save_new_image('img/IAmA_dguq41/comment1_level1_frame0.jpeg', 'tmp/test.jpeg')
