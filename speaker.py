@@ -1,7 +1,11 @@
+import sys
+
 from abc import ABC, abstractmethod
 from gtts import gTTS
 import pyttsx3
-import tts.sapi
+
+if sys.platform == 'win32':
+    import tts.sapi
 
 # Base class
 class Speaker(ABC):
@@ -27,7 +31,7 @@ class MicrosoftSpeaker(Speaker):
         self.engine.create_recording(path, text)
 
 
-class MicrosoftSpeakerPyTTSX3(Speaker):
+class MultiPlatformSpeaker(Speaker):
     def __init__(self):
         self.engine = pyttsx3.init()
         self.engine.setProperty('rate', 200) # default=200

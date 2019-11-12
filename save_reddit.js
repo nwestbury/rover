@@ -183,11 +183,11 @@ const fetchAndSave = async (subReddit, postId) => {
     const comments = await page.$$('div.Comment');
     const maxOverallComments = Math.min(comments.length, 10);
     const maxTopLevelComments = Math.min(comments.length, 3);
-    const maxSubComments = 2;
+    const maxSubComments = 3; // includes top level comment
     let topBoundBox = null;
 
     let comment_index = 0;
-    let top_level_comment_index = 0;
+    let top_level_comment_index = -1;
     let sub_comment_index = 0;
     for (var i=0; i<comments.length && comment_index < maxOverallComments && top_level_comment_index < maxTopLevelComments; ++i) {
         const commentHeader = await comments[i].$('div:nth-of-type(2) > div:nth-of-type(1) > span:last-of-type');
@@ -213,7 +213,11 @@ const fetchAndSave = async (subReddit, postId) => {
         const isTopLevelComment = level === 'level 1' || className.includes('top-level');
 
         sub_comment_index = isTopLevelComment ? 0 : sub_comment_index + 1;
-        if (sub_comment_index > maxSubComments) continue;
+        if (isTopLevelComment) {
+            ++top_level_comment_index;
+        }
+        if (top_level_comment_index >= maxTopLevelComments) continue;
+        if (sub_comment_index >= maxSubComments) continue;
 
         let sentence_index = 0;
         for (var j=0; j<para_sentences.length; ++j) {
@@ -245,11 +249,10 @@ const fetchAndSave = async (subReddit, postId) => {
             }
         }
 
+        let tmpTopBoundBox = await comments[i].boundingBox();
         if (isTopLevelComment) {
-            topBoundBox = await comments[i].boundingBox();
-            ++top_level_comment_index;
+            topBoundBox = tmpTopBoundBox
         } else {
-            let tmpTopBoundBox = await comments[i].boundingBox();
             topBoundBox.height += tmpTopBoundBox.height;
         }
 

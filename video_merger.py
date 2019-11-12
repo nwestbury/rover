@@ -5,19 +5,22 @@ from gtts import gTTS
 from PIL import Image
 
 from image_transformer import ImageTransformer
+from speaker import GoogleSpeaker
 
 logger = logging.getLogger('video_merger')
 
 class VideoMerger():
     def __init__(self):
         self.imageTransformer = ImageTransformer()
+        self.speaker = GoogleSpeaker()
 
-    def get_height_largest(self, submission_frames):
-        im = Image.open()
-        width, height = im.size
-
-    def get_last_frame_of_type(self, submission):
-        pass
+    def get_largest_heights(self, submission_frames):
+        largest_heights = {}
+        for frame in reversed(submission_frames): # assume last frame has the largest height
+            if frame['Group'] not in largest_heights:
+                _, height = self.imageTransformer.get_image_size(frame['Path'])
+                largest_heights[frame['Group']] = self.imageTransformer.height // 2 - height // 2
+        return largest_heights
 
     def load_frames(self, submission_frames):
         if not os.path.exists('tmp'):
@@ -25,17 +28,20 @@ class VideoMerger():
 
         for submission in submission_frames:
             clips = []
-            for frame in submission[1:3]:
+            largest_height_by_group = self.get_largest_heights(submission)
+
+            for frame in submission:
                 logger.info('Working on frame %s', frame['Name'])
 
-                t = gTTS(frame['Text'])
                 fp = os.path.join('tmp', frame['Name'] + '.mp3')
                 fp2 = os.path.join('tmp', frame['Name'] + '.jpeg')
 
-                t.save(fp)
-                audio_clip = AudioFileClip(fp)
 
-                self.imageTransformer.save_new_image(frame['Path'], fp2)
+                self.speaker.say_and_save(frame['Text'], fp)
+
+                audio_clip = AudioFileClip(fp)
+                max_height = largest_height_by_group[frame['Group']]
+                self.imageTransformer.save_new_image(frame['Path'], fp2, y=max_height)
                 clip = ImageClip(fp2, duration=audio_clip.duration)
                 clip = clip.set_audio(audio_clip)
                 clips.append(clip)

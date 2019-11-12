@@ -6,6 +6,10 @@ class ImageTransformer():
         self.width = 1980
         self.background_color = (26, 26, 26)
 
+    def get_image_size(self, img_path):
+        with Image.open(img_path) as image:
+            return image.size # (width, height)
+
     def save_new_image(self, img_path, new_img_path, y=None):
         image = Image.open(img_path)
         if image.width > self.width or image.height > self.height:
