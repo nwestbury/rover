@@ -3,7 +3,7 @@ from PIL import Image
 class ImageTransformer():
     def __init__(self):
         self.height = 1080
-        self.width = 1980
+        self.width = 1920
         self.background_color = (26, 26, 26)
 
     def get_image_size(self, img_path):

@@ -13,6 +13,7 @@ class VideoMerger():
     def __init__(self):
         self.imageTransformer = ImageTransformer()
         self.speaker = GoogleSpeaker()
+        self.transition_clip = VideoFileClip(os.path.join('clips', 'static.mp4'))
 
     def get_largest_heights(self, submission_frames):
         largest_heights = {}
@@ -28,10 +29,18 @@ class VideoMerger():
 
         for submission in submission_frames:
             clips = []
-            largest_height_by_group = self.get_largest_heights(submission)
+            if not submission:
+                continue
 
+            largest_height_by_group = self.get_largest_heights(submission)
+            last_group = submission[0]['Group']
             for frame in submission:
                 logger.info('Working on frame %s', frame['Name'])
+
+                cur_group = frame['Group']
+                if cur_group != last_group:
+                    clips.append(self.transition_clip)
+                    last_group = cur_group
 
                 fp = os.path.join('tmp', frame['Name'] + '.mp3')
                 fp2 = os.path.join('tmp', frame['Name'] + '.jpeg')
@@ -40,7 +49,7 @@ class VideoMerger():
                 self.speaker.say_and_save(frame['Text'], fp)
 
                 audio_clip = AudioFileClip(fp)
-                max_height = largest_height_by_group[frame['Group']]
+                max_height = largest_height_by_group[cur_group]
                 self.imageTransformer.save_new_image(frame['Path'], fp2, y=max_height)
                 clip = ImageClip(fp2, duration=audio_clip.duration)
                 clip = clip.set_audio(audio_clip)
