@@ -14,11 +14,13 @@ class ImageTransformer():
         image = Image.open(img_path)
         if image.width > self.width or image.height > self.height:
             ratio = min(self.width / image.width, self.height / image.height)
-            image = image.resize((self.width * ratio, self.height * ratio))
+            image = image.resize((int(image.width * ratio), int(image.height * ratio)))
+            y = self.height // 2 - image.height // 2
 
         new_image = Image.new('RGB', (self.width, self.height), self.background_color)
 
         y = self.height // 2 - image.height // 2 if y is None else y
+        y = max(y, 0)
         box = (self.width // 2 - image.width // 2, y)
         new_image.paste(image, box=box)
         new_image.save(new_img_path)

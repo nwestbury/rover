@@ -20,7 +20,8 @@ class VideoMerger():
         for frame in reversed(submission_frames): # assume last frame has the largest height
             if frame['Group'] not in largest_heights:
                 _, height = self.imageTransformer.get_image_size(frame['Path'])
-                largest_heights[frame['Group']] = self.imageTransformer.height // 2 - height // 2
+                height = max(self.imageTransformer.height // 2 - height // 2, 0)
+                largest_heights[frame['Group']] = height
         return largest_heights
 
     def load_frames(self, submission_frames):

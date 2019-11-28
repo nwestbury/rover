@@ -140,46 +140,14 @@ const fetchAndSave = async (subReddit, postId) => {
     await page.evaluate(() => {
         let nodes = document.querySelectorAll('div[data-test-id="post-content"] > div');
         nodes[nodes.length-2].style['display'] = 'block';
-        // nodes[nodes.length-1].style['display'] = 'block';
     });
 
     const nodes = await page.$$('div[data-test-id="post-content"] > div');
     const title = await page.evaluate(div => div.querySelector('div').textContent.trim(), nodes[2]);
-    let pars = await page.evaluateHandle(div => div.querySelectorAll('div > p, ul > li'), nodes[4]);
-
-    // Hide paragraphs, get text
-    const [split_sentences, para_sentences] = await page.evaluate((pars) => {
-        const text = [];
-        for (const p of pars) {
-            text.push(p.textContent);
-            p.style['display'] = 'none';
-        }
-        return split_paragraphs(text);
-    }, pars);
-
-
+    let pars = null
     const rows = [{name: 'title', type: 'title', path: `${rootImgPath}/title.jpeg`, text: title, group: 0}];
 
-    let sentence_index = 0;
-    for (var i=0; i<para_sentences.length; ++i) {
-        // Un-hide individual paragraphs
-        await page.evaluate((pars, i) => {
-            pars[i].style['display'] = pars[i].nodeName == 'LI' ? 'list-item' : 'block';
-        }, pars, i);
-
-        for (const para_sentence of para_sentences[i]) {
-            const name = `post_frame${sentence_index}`;
-            const path = `${rootImgPath}/${name}.jpeg`;
-            const text = split_sentences[sentence_index].trim();
-            // Change the text of the current paragraph to add in the next sentence
-            await page.evaluate((pars, i, para_sentence) => { pars[i].innerHTML = para_sentence }, pars, i, para_sentence);
-            await titleDiv.screenshot({path, quality: 100});
-
-            rows.push({name, type: 'post', path, text, group: 1});
-            ++sentence_index;
-        }
-    }
-
+    // Start comment scraping
     const comments = await page.$$('div.Comment');
     const maxOverallComments = Math.min(comments.length, 10);
     const maxTopLevelComments = Math.min(comments.length, 3);
@@ -257,6 +225,39 @@ const fetchAndSave = async (subReddit, postId) => {
         }
 
         ++comment_index;
+    }
+
+    // Start post scraping (needs to be after comments otherwise there is some clipping issue)
+    pars = await page.evaluateHandle(div => div.querySelectorAll('div > p, ul > li'), nodes[4]);
+
+    // Hide paragraphs, get text
+    const [split_sentences, para_sentences] = await page.evaluate((pars) => {
+        const text = [];
+        for (const p of pars) {
+            text.push(p.textContent);
+            p.style['display'] = 'none';
+        }
+        return split_paragraphs(text);
+    }, pars);
+
+    let sentence_index = 0;
+    for (var i=0; i<para_sentences.length; ++i) {
+        // Un-hide individual paragraphs
+        await page.evaluate((pars, i) => {
+            pars[i].style['display'] = pars[i].nodeName == 'LI' ? 'list-item' : 'block';
+        }, pars, i);
+
+        for (const para_sentence of para_sentences[i]) {
+            const name = `post_frame${sentence_index}`;
+            const path = `${rootImgPath}/${name}.jpeg`;
+            const text = split_sentences[sentence_index].trim();
+            // Change the text of the current paragraph to add in the next sentence
+            await page.evaluate((pars, i, para_sentence) => { pars[i].innerHTML = para_sentence }, pars, i, para_sentence);
+            await titleDiv.screenshot({path, quality: 100});
+
+            rows.push({name, type: 'post', path, text, group: 1});
+            ++sentence_index;
+        }
     }
 
     const csvWriter = createCsvWriter({  
