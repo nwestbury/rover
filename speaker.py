@@ -1,7 +1,8 @@
-import sys
+import sys, os
 
 from abc import ABC, abstractmethod
 from gtts import gTTS
+from pydub import AudioSegment
 import pyttsx3
 
 if sys.platform == 'win32':
@@ -13,22 +14,42 @@ class Speaker(ABC):
     def say_and_save(self, text, path):
         pass
 
+    @property
+    @abstractmethod
+    def audio_format(self):
+        pass
+
 
 class GoogleSpeaker(Speaker):
     def say_and_save(self, text, path):
         tts = gTTS(text=text, lang='en')
         tts.save(path)
 
+    @property
+    def audio_format(self):
+        return 'mp3'
+
+# Best voice is probably this one: https://harposoftware.com/en/english-uk/191-Daniel-Nuance-Voice.html
 class MicrosoftSpeaker(Speaker):
     def __init__(self):
         self.engine = tts.sapi.Sapi()
         self.engine.set_rate(2) # rate: -10 to 10
-        self.engine.set_voice('David') # self.engine.get_voice_names()
+        self.engine.set_voice('Daniel') # self.engine.get_voice_names()
 
     def say_and_save(self, text, path):
-        if not path.endswith('.wav'):
-            raise ValueError('Expect output path to be in wav format.')
-        self.engine.create_recording(path, text)
+        if not path.endswith(('mp3', 'wav')):
+            raise ValueError('Expect format output path to be wav or mp3 only')
+
+        tmp_path = path + '.wav' if path.endswith('mp3') else path            
+        self.engine.create_recording(tmp_path, text)
+
+        if path.endswith('mp3'):
+            AudioSegment.from_wav(tmp_path).export(path, format='mp3')
+            os.remove(tmp_path)
+
+    @property
+    def audio_format(self):
+        return 'mp3'
 
 
 class MultiPlatformSpeaker(Speaker):
@@ -40,9 +61,11 @@ class MultiPlatformSpeaker(Speaker):
         self.engine.say(text)
         self.engine.runAndWait() # cannot save directly :(
 
+    @property
+    def audio_format(self):
+        return None
+
 
 if __name__ == '__main__':
     ms = MicrosoftSpeaker()
-
-    ms.say_and_save('I like pizza and pie.', './testomg.wav')
-
+    ms.say_and_save('I like pizza and pie.', './test.wav')

@@ -29,11 +29,16 @@ class RedditScraper():
 
         submissions = []
         for submission in sub_reddit.top(time_filter='day', limit=subreddit_info['num_posts']):
-            submissions.append(submission.id)
+            submissions.append({
+                'id': submission.id,
+                'title': submission.title,
+                'url': submission.url,
+                'num_comments': submission.num_comments,
+                'gildings': submission.gildings,
+            })
             logger.info('Got Submission Glidings: %s', submission.gildings)
-            # print(submission.title, submission.score, submission.url, submission.num_comments, submission.gildings)
 
-        logger.info('Got Submission IDs: %s', submissions)
+        logger.info('Got Submission IDs: %s', [sub['id'] for sub in submissions])
         return submissions
     
     def create_submission_video_frames(self, subreddit_name, submission_id):
@@ -43,7 +48,7 @@ class RedditScraper():
             return path
 
         cmd = ["node", "save_reddit.js", subreddit_name, submission_id]
-        logger.info('Scraping %s %s... [%s]', submission_id, submission_id, ' '.join(cmd))
+        logger.info('Scraping %s... [%s]', submission_id, ' '.join(cmd))
         out = subprocess.run(cmd, capture_output=True)
         if out.returncode:
             logger.info('Got output %s', out)
@@ -57,13 +62,15 @@ class RedditScraper():
 
 
     def fetch_and_create_frames(self, subreddit_info):
-        submission_ids = self.fetch_sub_post(subreddit_info)
+        submissions = self.fetch_sub_post(subreddit_info)
 
         frame_paths = []
-        for submission_id in submission_ids:
-            csv_path = self.create_submission_video_frames(subreddit_info['name'], submission_id)
+        for submission in submissions:
+            csv_path = self.create_submission_video_frames(subreddit_info['name'], submission['id'])
             csv_data = self.read_csv(csv_path)
             frame_paths.append(csv_data)
 
-        return frame_paths
+        for index in range(len(frame_paths)):
+            frame_paths[index].sort(key=lambda x: x['Group'])
 
+        return submissions, frame_paths
