@@ -1,4 +1,5 @@
 import sys, os
+import logging
 
 from abc import ABC, abstractmethod
 from gtts import gTTS
@@ -7,6 +8,8 @@ import pyttsx3
 
 if sys.platform == 'win32':
     import tts.sapi
+
+logger = logging.getLogger('speaker')
 
 # Base class
 class Speaker(ABC):
@@ -34,7 +37,13 @@ class MicrosoftSpeaker(Speaker):
     def __init__(self):
         self.engine = tts.sapi.Sapi()
         self.engine.set_rate(2) # rate: -10 to 10
-        self.engine.set_voice('Daniel') # self.engine.get_voice_names()
+
+        logger.info('Voices %s', self.engine.get_voice_names())
+        try:
+            self.engine.set_voice('Daniel') # self.engine.get_voice_names()
+        except IndexError:
+            logger.error('Is the "Daniel" voice installed?')
+            self.engine.set_voice('David')
 
     def say_and_save(self, text, path):
         if not path.endswith(('mp3', 'wav')):
@@ -50,6 +59,9 @@ class MicrosoftSpeaker(Speaker):
     @property
     def audio_format(self):
         return 'mp3'
+
+    def check_voices(self):
+        logger.info('Voices %s', self.engine.get_voice_names())
 
 
 class MultiPlatformSpeaker(Speaker):
@@ -68,4 +80,4 @@ class MultiPlatformSpeaker(Speaker):
 
 if __name__ == '__main__':
     ms = MicrosoftSpeaker()
-    ms.say_and_save('I like pizza and pie.', './test.wav')
+    ms.check_voices()
