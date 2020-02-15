@@ -4,7 +4,6 @@ moviepy==1.0.0 # https://github.com/Zulko/moviepy/issues/938
 # pypiwin32
 pyttsx3
 gtts
-git+https://github.com/DeepHorizons/tts
 pydub
 google-api-python-client
 oauth2client

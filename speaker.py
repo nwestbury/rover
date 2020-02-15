@@ -6,10 +6,15 @@ from gtts import gTTS
 from pydub import AudioSegment
 import pyttsx3
 
-if sys.platform == 'win32':
-    import tts.sapi
 
 logger = logging.getLogger('speaker')
+logger.setLevel(logging.DEBUG) # Why no work?
+
+if sys.platform == 'win32':
+    try:
+        import tts.sapi
+    except:
+        logger.error('Some weird unfixable error import tts.sapi, just move on...')
 
 # Base class
 class Speaker(ABC):
@@ -69,15 +74,29 @@ class MultiPlatformSpeaker(Speaker):
         self.engine = pyttsx3.init()
         self.engine.setProperty('rate', 200) # default=200
 
+        voiceId = self.voices[0].id
+        for voice in self.voices:
+            if 'Daniel' in voice.name:
+                voiceId = voice.id
+                break
+        self.engine.setProperty('voice', voiceId)
+
     def say_and_save(self, text, path):
         self.engine.say(text)
-        self.engine.runAndWait() # cannot save directly :(
+        self.engine.save_to_file(text, './omg/go.mp3')
 
     @property
     def audio_format(self):
         return None
 
+    @property
+    def voices(self):
+        return self.engine.getProperty('voices')
+
+    def check_voices(self):
+        for voice in self.voices:
+            logger.warning('Voice %s (id: %s)', voice.name, voice.id)
 
 if __name__ == '__main__':
-    ms = MicrosoftSpeaker()
-    ms.check_voices()
+    mps = MultiPlatformSpeaker()
+    mps.say_and_save('Hello World!', './test.mp3')
