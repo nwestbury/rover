@@ -14,7 +14,6 @@ class RedditVideo():
         self.uploader = YouTubeUploader()
         self.subreddits_info = [
             {'name': 'AskReddit', 'num_posts': 1},
-            {'name': 'IAmA', 'num_posts': 1},
             {'name': 'Showerthoughts', 'num_posts': 1},
             {'name': 'tifu', 'num_posts': 1},
         ]

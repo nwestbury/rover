@@ -64,7 +64,18 @@ const split_paragraphs = (paras) => {
 }
 const addslashes = (str) => (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
 
-const exposed_funcs = [split_paragraphs];
+const url_regex = /(?:https?|ftp):\/\/[\n\S]+/g;
+const clean_text = (str) => {
+    if (!str) return '';
+    const og_len = str.length
+    let new_text = str.replace(url_regex, '');
+
+    // if we remove most of the text it's probably useless (e.g. Proof: https://www.bla.com)
+    if (og_len > (new_text.length * 5)) return '';
+    return new_text;
+};
+
+const exposed_funcs = [split_paragraphs, clean_text];
 
 const fetchAndSave = async (subReddit, postId) => {
 
@@ -100,6 +111,7 @@ const fetchAndSave = async (subReddit, postId) => {
     await page.goto(`https://www.reddit.com/r/${subReddit}/comments/${postId}/?sort=top`,
                     {waitUntil: 'domcontentloaded'});
     await page.waitForSelector(`${topDivs}:nth-of-type(2) div`);
+    await page.waitFor(500); // Timeout hack to get shit to work (why do I need this?)
 
     // Up vote page :)
     if (await page.$('[data-click-id="upvote"][aria-pressed="false"][id^="upvote-button-"]') !== null) {
@@ -119,21 +131,20 @@ const fetchAndSave = async (subReddit, postId) => {
         }
         nodes[nodes.length-1].style['display'] = 'none';
 
-        // Delete top of title
-        dom = document.querySelector(`${topDivs}:nth-of-type(2) div div div div:nth-of-type(2) div`);
-        dom.parentNode.removeChild(dom);
-
         // Delete header
         dom = document.querySelector(topDivs);
         dom.parentNode.removeChild(dom);
+
+        nodes = document.querySelectorAll(`${topDivs} > div`);
+        nodes.forEach(node => {
+            node.style['margin-top'] = '0px';
+        });
     }, topDivs);
 
     await page.waitFor(500); // Timeout hack to get shit to work (why do I need this?)
 
     // Take screenshot of just the title and upvote buttons
-    const selector = `${topDivs}:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div`;
-    const largeDiv = await page.$$(selector);
-    const titleDiv = largeDiv[0];
+    const titleDiv = await page.evaluateHandle(() => document.querySelector('div[data-test-id="post-content"]').parentElement);
     await titleDiv.screenshot({path: `${rootImgPath}/title.jpeg`, quality: 100});
 
     // Re-display the post-content text and comment numbers
@@ -159,14 +170,21 @@ const fetchAndSave = async (subReddit, postId) => {
     let sub_comment_index = 0;
     for (var i=0; i<comments.length && comment_index < maxOverallComments && top_level_comment_index < maxTopLevelComments; ++i) {
         const commentHeader = await comments[i].$('div:nth-of-type(2) > div:nth-of-type(1) > span:last-of-type');
+        const svgIcon = await comments[i].$('div:nth-of-type(2) > div:nth-of-type(1) > svg');
         const stickedText = await (await commentHeader.getProperty('textContent')).jsonValue();
+        const svgIconType = svgIcon && await (await svgIcon.getProperty('id')).jsonValue();
+
+        if (svgIconType && svgIconType.includes('Mod')) continue; // ignore mod comments
         if (stickedText == 'Stickied comment') continue; // ignore stickied comments
 
         pars = await page.evaluateHandle(div => div.querySelectorAll('div:nth-of-type(2) > div[data-test-id="comment"] > div > p, ul > li'), comments[i]);
-        const [split_sentences, para_sentences] = await page.evaluate((pars) => {
+        const [split_sentences, para_sentences] = await page.evaluate(async (pars) => {
             const text = [];
             for (const p of pars) {
-                if (p.textContent) text.push(p.textContent);
+                const cleanedText = await clean_text(p.textContent);
+                if (cleanedText) {
+                    text.push(cleanedText);
+                }
                 p.style['display'] = 'none';
             }
             return split_paragraphs(text);
@@ -231,10 +249,13 @@ const fetchAndSave = async (subReddit, postId) => {
     pars = await page.evaluateHandle(div => div.querySelectorAll('div > p, ul > li'), nodes[4]);
 
     // Hide paragraphs, get text
-    const [split_sentences, para_sentences] = await page.evaluate((pars) => {
+    const [split_sentences, para_sentences] = await page.evaluate(async (pars) => {
         const text = [];
         for (const p of pars) {
-            text.push(p.textContent);
+            const cleanedText = await clean_text(p.textContent)
+            if (cleanedText) {
+                text.push(p.textContent);
+            }
             p.style['display'] = 'none';
         }
         return split_paragraphs(text);

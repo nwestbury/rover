@@ -8,7 +8,7 @@ import pyttsx3
 
 
 logger = logging.getLogger('speaker')
-logger.setLevel(logging.DEBUG) # Why no work?
+# logger.setLevel(logging.DEBUG) # Why no work?
 
 if sys.platform == 'win32':
     try:
