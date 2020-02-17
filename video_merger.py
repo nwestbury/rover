@@ -65,8 +65,11 @@ class VideoMerger():
         video_fp = os.path.join(self.cwd, 'video', 'out.mp4') if output_path is None else output_path
         logger.info('Creating video file %s', video_fp)
         final_clip = concatenate_videoclips(clips, method='compose')
-        final_clip.write_videofile(video_fp, fps=24, remove_temp=False) # not sure but remove_temp=False is needed
-        
+        final_clip.write_videofile(
+            video_fp, fps=24, remove_temp=False,
+            temp_audiofile=os.path.join(tmp_folder, 'TMPaudio.mp3')
+        ) # not sure but remove_temp=False is needed
+
         if os.path.exists(tmp_folder):
             shutil.rmtree(tmp_folder)
 

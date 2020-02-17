@@ -97,6 +97,17 @@ class MultiPlatformSpeaker(Speaker):
         for voice in self.voices:
             logger.warning('Voice %s (id: %s)', voice.name, voice.id)
 
+
+class MicrosoftSpeaker2(Speaker):
+    def __init__(self):
+        self.engine = pyttsx3.init()
+        self.engine.setProperty('rate', 200) # default=200
+        self.engine.setProperty('voice', 0)
+
+    def say_and_save(self, text, path):
+        self.engine.say(text)
+        self.engine.save_to_file(text, './omg/go.mp3')
+
 if __name__ == '__main__':
     mps = MultiPlatformSpeaker()
     mps.say_and_save('Hello World!', './test.mp3')
