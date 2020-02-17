@@ -2,9 +2,12 @@ from PIL import Image
 
 class ImageTransformer():
     def __init__(self):
-        self.height = 1080
-        self.width = 1920
+        self.set_width_height(1920, 1080)
         self.background_color = (26, 26, 26)
+
+    def set_width_height(self, width, height):
+        self.height = height
+        self.width = width
 
     def get_image_size(self, img_path):
         with Image.open(img_path) as image:

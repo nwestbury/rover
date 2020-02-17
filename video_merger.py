@@ -59,8 +59,8 @@ class VideoMerger():
                 clip = clip.set_audio(audio_clip)
                 clips.append(clip)
 
-        thumbnail_fp = os.path.join(self.cwd, submission_frames[0][0]['Path'])
-        shutil.copy(thumbnail_fp, os.path.join(self.cwd, 'video', 'thumbnail.jpg'))
+        title_fp = os.path.join(self.cwd, submission_frames[0][0]['Path'])
+        shutil.copy(title_fp, os.path.join(self.cwd, 'video', 'posttitle.jpg'))
 
         video_fp = os.path.join(self.cwd, 'video', 'out.mp4') if output_path is None else output_path
         logger.info('Creating video file %s', video_fp)
