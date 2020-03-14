@@ -4,6 +4,7 @@ from datetime import datetime
 from reddit_scraper import RedditScraper
 from video_merger import VideoMerger
 from youtube_uploader import YouTubeUploader
+from thumbnail_creator import ThumbnailCreator
 
 logger = logging.getLogger('reddit_video')
 
@@ -12,12 +13,14 @@ class RedditVideo():
         self.scraper = RedditScraper()
         self.merger = VideoMerger()
         self.uploader = YouTubeUploader()
+        self.thumbnail_creator = ThumbnailCreator()
         self.subreddits_info = [
             {'name': 'AskReddit', 'num_posts': 1},
             {'name': 'Showerthoughts', 'num_posts': 1},
             {'name': 'tifu', 'num_posts': 1},
         ]
         self.default_video_path = './video/out.mp4'
+        self.default_thumbnail_path = './video/thumbnail.jpg'
 
     def select_subreddit(self):
         now = datetime.now()
@@ -28,18 +31,25 @@ class RedditVideo():
     def upload_video(self):
         subreddit_info = self.select_subreddit()
         submissions, paths = self.scraper.fetch_and_create_frames(subreddit_info)
-        self._upload_video(subreddit_info['name'], submissions, self.default_video_path)
 
-    def _upload_video(self, subreddit_name, submissions, video_path):
+        self._upload_video(subreddit_info['name'], submissions, self.default_video_path, self.default_thumbnail_path)
+
+    def _upload_video(self, subreddit_name, submissions, video_path, thumbnail_path, credits={}):
         title = submissions[0]['title']
         posts = [f"{i}: {submission['url']}" for i, submission in enumerate(submissions)]
-        video_id = self.uploader.upload(title, subreddit_name, posts)
-        self.uploader.upload_thumbnail(video_id)
+        video_id = self.uploader.upload(video_path, title, subreddit_name, posts, credits=credits)
+        self.uploader.upload_thumbnail(thumbnail_path, video_id)
 
     def create_video(self, upload=False):
         subreddit_info = self.select_subreddit()
         submissions, paths = self.scraper.fetch_and_create_frames(subreddit_info)
         video_path = self.merger.load_frames(paths)
 
+        title = submissions[0]['title']
+        thumbnail_path, ref_link = self.thumbnail_creator.create_thumbnail(self.default_thumbnail_path, title)
+
         if upload:
-            self._upload_video(subreddit_info['name'], submissions, video_path)
+            credits = {
+                'Thumbnail Image': ref_link
+            }
+            self._upload_video(subreddit_info['name'], submissions, video_path, thumbnail_path, credits=credits)

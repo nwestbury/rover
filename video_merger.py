@@ -15,7 +15,7 @@ class VideoMerger():
         self.imageTransformer = ImageTransformer()
         self.speaker = MicrosoftSpeaker()
         self.cwd = os.path.dirname(os.path.realpath(__file__))
-        self.transition_clip = VideoFileClip(os.path.join(self.cwd, 'clips', 'static.mp4'))
+        self.transition_clip = VideoFileClip(os.path.join(self.cwd, 'assets', 'static.mp4'))
 
     def get_largest_heights(self, submission_frames):
         largest_heights = {}

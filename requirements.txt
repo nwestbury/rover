@@ -8,3 +8,4 @@ pydub
 google-api-python-client
 oauth2client
 git+https://github.com/DeepHorizons/tts
+google_images_download
