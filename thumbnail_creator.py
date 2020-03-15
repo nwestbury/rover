@@ -1,10 +1,13 @@
 import os
+import logging
 from PIL import Image
 import requests
 from io import BytesIO
 
 from image_transformer import ImageTransformer
 from bing_search import get_image_keyword
+
+logger = logging.getLogger('creator')
 
 class ThumbnailCreator():
     def __init__(self):
@@ -17,14 +20,16 @@ class ThumbnailCreator():
         self.it.set_width_height(*self.dimensions)
 
     def fetch_image(self, title):
-        image_infos = [] # get_image_keyword(title)
+        image_infos = get_image_keyword(title)
 
         if not image_infos:
+            logger.warning('Could not find thumbnail image, defaulting...')
             img = Image.open(os.path.join(self.cwd, 'assets', 'shrug.png'))
             ref_link = 'https://www.pngkey.com/download/u2q8e6u2y3t4a9t4_shrug-emoji-old-man-shrugging-old-man-png/'
             return img, ref_link
 
         url, ref_link = image_infos[0]['url'], image_infos[0]['ref']
+        logger.warning(f'Found thumbnail image: {url}')
         response = requests.get(url)
         img = Image.open(BytesIO(response.content))
 
@@ -59,4 +64,4 @@ class ThumbnailCreator():
 
 if __name__ == "__main__":
     tc = ThumbnailCreator()
-    tc.create_thumbnail(os.path.join(tc.cwd, 'video', 'thumnail.jpg'), 'test')
+    tc.create_thumbnail(os.path.join(tc.cwd, 'video', 'thumbnail.jpg'), 'TIFU ny inspecting an empty hotel room')

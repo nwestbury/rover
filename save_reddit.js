@@ -42,6 +42,18 @@ var removeDirContents = function(path) {
     }
 };
 
+const replace_phrases = {
+    'AMA': 'Ask Me Anything',
+    'TIFU': 'Today I Effed up'
+}
+const reddit_replace = (string) => {
+    let newString = string.trim()
+    for (let [key, value] of Object.entries(replace_phrases)) {
+        newString = newString.replace(new RegExp(key, "ig"), value);
+    }
+    return newString;
+}
+
 const sentence_regex = /([^,\.!\?;]+[,\.!\?;]+)|([^,\.!\?;]+$)/g;
 const split_paragraphs = (paras) => {
     let flattened_sentences = [];
@@ -156,7 +168,7 @@ const fetchAndSave = async (subReddit, postId) => {
     const nodes = await page.$$('div[data-test-id="post-content"] > div');
     const title = await page.evaluate(div => div.querySelector('div').textContent.trim(), nodes[2]);
     let pars = null
-    const rows = [{name: 'title', type: 'title', path: `${rootImgPath}/title.jpeg`, text: title, group: 0}];
+    const rows = [{name: 'title', type: 'title', path: `${rootImgPath}/title.jpeg`, text: reddit_replace(title), group: 0}];
 
     // Start comment scraping
     const comments = await page.$$('div.Comment');
@@ -215,7 +227,7 @@ const fetchAndSave = async (subReddit, postId) => {
             for (const para_sentence of para_sentences[j]) {
                 const name = `comment${top_level_comment_index}_level${sub_comment_index}_frame${sentence_index}`;
                 const path = `${rootImgPath}/${name}.jpeg`;
-                const text = split_sentences[sentence_index].trim();
+                const text = reddit_replace(split_sentences[sentence_index]);
 
                 // Change the text of the current paragraph to add in the next sentence
                 await page.evaluate((pars, j, para_sentence) => { pars[j].innerHTML = para_sentence }, pars, j, para_sentence);
@@ -271,7 +283,7 @@ const fetchAndSave = async (subReddit, postId) => {
         for (const para_sentence of para_sentences[i]) {
             const name = `post_frame${sentence_index}`;
             const path = `${rootImgPath}/${name}.jpeg`;
-            const text = split_sentences[sentence_index].trim();
+            const text = reddit_replace(split_sentences[sentence_index]);
             // Change the text of the current paragraph to add in the next sentence
             await page.evaluate((pars, i, para_sentence) => { pars[i].innerHTML = para_sentence }, pars, i, para_sentence);
             await titleDiv.screenshot({path, quality: 100});

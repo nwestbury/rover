@@ -85,7 +85,7 @@ def get_authenticated_service():
         credentials = run_flow(flow, storage, args)
 
     return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
-        http=credentials.authorize(httplib2.Http()))
+        http=credentials.authorize(httplib2.Http()), cache_discovery=False)
 
 def initialize_upload(
         file: str, title: str, description: str, tags: List[str], categoryId: str = "24", privacyStatus: str = "public"

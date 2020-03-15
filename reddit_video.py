@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 
 from reddit_scraper import RedditScraper
@@ -15,12 +16,13 @@ class RedditVideo():
         self.uploader = YouTubeUploader()
         self.thumbnail_creator = ThumbnailCreator()
         self.subreddits_info = [
-            {'name': 'AskReddit', 'num_posts': 1},
-            {'name': 'Showerthoughts', 'num_posts': 1},
-            {'name': 'tifu', 'num_posts': 1},
+            {'name': 'AskReddit', 'num_posts': 2},
+            {'name': 'Showerthoughts', 'num_posts': 4},
+            {'name': 'tifu', 'num_posts': 2},
         ]
-        self.default_video_path = './video/out.mp4'
-        self.default_thumbnail_path = './video/thumbnail.jpg'
+        cwd = os.path.dirname(os.path.realpath(__file__))
+        self.default_video_path = os.path.join(cwd, 'video', 'out.mp4')
+        self.default_thumbnail_path = os.path.join(cwd, 'video', 'thumbnail.jpeg')
 
     def select_subreddit(self):
         now = datetime.now()
@@ -36,7 +38,7 @@ class RedditVideo():
 
     def _upload_video(self, subreddit_name, submissions, video_path, thumbnail_path, credits={}):
         title = submissions[0]['title']
-        posts = [f"{i}: {submission['url']}" for i, submission in enumerate(submissions)]
+        posts = [f"{i}: {submission['url']}" for i, submission in enumerate(submissions, 1)]
         video_id = self.uploader.upload(video_path, title, subreddit_name, posts, credits=credits)
         self.uploader.upload_thumbnail(thumbnail_path, video_id)
 

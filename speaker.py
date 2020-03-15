@@ -109,5 +109,5 @@ class MicrosoftSpeaker2(Speaker):
         self.engine.save_to_file(text, './omg/go.mp3')
 
 if __name__ == '__main__':
-    mps = MultiPlatformSpeaker()
+    mps = MicrosoftSpeaker()
     mps.say_and_save('Hello World!', './test.mp3')

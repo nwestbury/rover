@@ -36,22 +36,22 @@ class RedditScraper():
                 'num_comments': submission.num_comments,
                 'gildings': submission.gildings,
             })
-            logger.info('Got Submission Glidings: %s', submission.gildings)
+            logger.warning('Got Submission Glidings: %s', submission.gildings)
 
-        logger.info('Got Submission IDs: %s', [sub['id'] for sub in submissions])
+        logger.warning('Got Submission IDs: %s', [sub['id'] for sub in submissions])
         return submissions
     
     def create_submission_video_frames(self, subreddit_name, submission_id):
         path = os.path.join(self.metadata_dir, f"{subreddit_name}_{submission_id}.csv")
         if os.path.isfile(path):
-            logger.info('Skipping already fetched file: %s', path)
+            logger.warning('Skipping already fetched file: %s', path)
             return path
 
         cmd = ["node", "save_reddit.js", subreddit_name, submission_id]
-        logger.info('Scraping %s... [%s]', submission_id, ' '.join(cmd))
+        logger.warning('Scraping %s... [%s]', submission_id, ' '.join(cmd))
         out = subprocess.run(cmd, capture_output=True)
         if out.returncode:
-            logger.info('Got output %s', out)
+            logger.warning('Got output %s', out)
 
         return path
 

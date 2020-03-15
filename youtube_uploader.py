@@ -9,11 +9,11 @@ class YouTubeUploader():
         upload_thumbnail(video_id, thumbNailPath)
 
     def upload(self, videoPath, postTitle, subReddit, postList, credits={}):
-        title = f'{postTitle} (r/{subReddit})'
+        title = f'{postTitle} (r/{subReddit} | Reddit Rover)'
         extra_credits = os.linesep + os.linesep.join(f'{key}: {link}' for key, link in credits.items())
 
         description = f'''► {title}
-► I am Reddit Rover, I explore Reddit and find the highlights for your enjoyment!
+► I am Reddit Rover, I explore Reddit and find the highlights for your enjoyment! New videos every day.
 
 ⭐ Click the Subscribe button to get video in your feed
 👍 Like the video!

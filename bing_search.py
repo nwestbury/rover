@@ -12,6 +12,8 @@ def get_image_keyword(keyword, limit=1):
     })
     url = "https://www.bing.com/images/search?" + query
 
+    print(f'Searching bing with {url}')
+
     headers={'User-Agent':"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.134 Safari/537.36"}
     soup = BeautifulSoup(urllib.request.urlopen(urllib.request.Request(url, headers=headers)), features='lxml')
 
