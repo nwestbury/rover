@@ -2,7 +2,6 @@ import logging
 import os
 import subprocess
 import shutil
-from moviepy.editor import *
 from gtts import gTTS
 from PIL import Image
 
@@ -23,11 +22,7 @@ class VideoMerger():
         self.imageTransformer = ImageTransformer()
         self.speaker = MicrosoftSpeaker()
         self.cwd = os.path.dirname(os.path.realpath(__file__))
-        self.transition_clip_path = os.path.join(self.cwd, 'assets', 'static.mp4')
-        self.transition_clip_audio_path = os.path.join(self.cwd, 'assets', 'static.mp3')
-        self.transition_clip_duration = self.get_audio_duration(self.transition_clip_path)
-
-        self.transition_clip = VideoFileClip(self.transition_clip_path)
+        self.transition_clip_path = os.path.join(self.cwd, 'assets', 'static.mkv')
 
     def get_largest_heights(self, submission_frames):
         largest_heights = {}
@@ -40,7 +35,7 @@ class VideoMerger():
 
     def get_audio_duration(self, audio_file_path, cwd=None):
         cmd = f'ffprobe -i {audio_file_path} -show_entries format=duration -v quiet -of csv="p=0"'
-        return round(float(run_cmd(cmd, cwd=cwd)), 1)
+        return run_cmd(cmd, cwd=cwd)
 
     def merge_audio_files(self, audio_file_paths, out_audio_path, cwd=None):
         cmd = f'ffmpeg -y -i "concat:{"|".join(audio_file_paths)}" -acodec copy {out_audio_path}'
@@ -74,14 +69,24 @@ class VideoMerger():
 
         # run_cmd(cmd, cwd=cwd)
 
+    def create_clip(self, image_fp, audio_fp, video_fp, cwd=None):
+        duration = self.get_audio_duration(audio_fp)
+        cmd = f'ffmpeg -y -loop 1 -i {image_fp} -i {audio_fp} -c:v libx264 -tune stillimage -c:a aac -shortest -t {duration} {video_fp}'
+        return run_cmd(cmd, cwd=cwd)
+
+    def merge_mkvs(self, clips, video_fp, tmp_folder):
+        with open(os.path.join(tmp_folder, 'list.txt'), 'w') as f:
+            f.writelines(os.linesep.join((f"file '{clip}'" for clip in clips)))
+
+        cmd = f"ffmpeg -y -f concat -safe 0 -i list.txt -c copy -c:v libx264 -c:a aac {video_fp}"
+        return run_cmd(cmd, cwd=tmp_folder)
+
     def load_frames(self, submission_frames, output_path=None):
         tmp_folder = os.path.join(self.cwd, 'tmp')
         if not os.path.exists(tmp_folder):
             os.mkdir(tmp_folder)
 
-        clips = [] # format: [{path: '', duration: ''} ...]
-        audio_clips = [] # format: ['', ...]
-
+        clips = [] # format: [''...]
         index = 0
         for submission in submission_frames:
             if not submission:
@@ -95,95 +100,35 @@ class VideoMerger():
 
                 cur_group = frame['Group']
                 if cur_group != last_group:
-                    clips.append({'path': self.transition_clip_path, 'duration': self.transition_clip_duration})
-                    audio_clips.append(self.transition_clip_audio_path)
+                    clips.append(self.transition_clip_path)
                     last_group = cur_group
 
                 audio_fp = os.path.join(tmp_folder, f'{index}.mp3')
                 original_image_fp = os.path.join(self.cwd, frame['Path'])
                 image_fp = os.path.join(tmp_folder, f'{index}.jpeg')
+                video_fp = os.path.join(tmp_folder, f'{index}.mkv')
 
                 self.speaker.say_and_save(frame['Text'], audio_fp)
-                duration = self.get_audio_duration(audio_fp)
 
                 max_height = largest_height_by_group[cur_group]
                 self.imageTransformer.save_new_image(original_image_fp, image_fp, y=max_height)
                 
-                clips.append({'path': f'{index}.jpeg', 'duration': duration})
-                audio_clips.append(f'{index}.mp3')
-                index += 1
 
-        # For some reason, audio can get out of sync so make sure the last frame is shown longer
-        # so at least we don't lose audio (it will get cut out by ffmpeg)
-        clips[-1]['duration'] += 10
+                self.create_clip(image_fp, audio_fp, video_fp, cwd=tmp_folder)
+                clips.append(video_fp)
+                index += 1
 
         title_fp = os.path.join(self.cwd, submission_frames[0][0]['Path'])
         shutil.copy(title_fp, os.path.join(self.cwd, 'video', 'posttitle.jpg'))
 
-        logger.info('Merging all %d audio files', len(audio_clips))
-        master_audio_fp = os.path.join(tmp_folder, 'master.mp3')
-        self.merge_audio_files(audio_clips, master_audio_fp, cwd=tmp_folder)
-
         video_fp = os.path.join(self.cwd, 'video', 'out.mp4') if output_path is None else output_path
         logger.info('Creating video file %s', video_fp)
-        self.merge_pictures_as_video(clips, master_audio_fp, video_fp, cwd=tmp_folder)
+        self.merge_mkvs(clips, video_fp, tmp_folder)
 
         if os.path.exists(tmp_folder):
             shutil.rmtree(tmp_folder, ignore_errors=True)
 
         return video_fp
-
-
-"""
-    def load_frames(self, submission_frames, output_path=None):
-        tmp_folder = os.path.join(self.cwd, 'tmp')
-        if not os.path.exists(tmp_folder):
-            os.mkdir(tmp_folder)
-
-        clips = []
-        for submission in submission_frames:
-            if not submission:
-                continue
-
-            largest_height_by_group = self.get_largest_heights(submission)
-            last_group = submission[0]['Group']
-            for frame in submission:
-                logger.info('Working on frame %s', frame['Name'])
-
-                cur_group = frame['Group']
-                if cur_group != last_group:
-                    clips.append(self.transition_clip)
-                    last_group = cur_group
-
-                audio_fp = os.path.join(tmp_folder, frame['Name'] + '.mp3')
-                original_image_fp = os.path.join(self.cwd, frame['Path'])
-                image_fp = os.path.join(tmp_folder, frame['Name'] + '.jpeg')
-
-                self.speaker.say_and_save(frame['Text'], audio_fp)
-
-                audio_clip = AudioFileClip(audio_fp)
-                max_height = largest_height_by_group[cur_group]
-                self.imageTransformer.save_new_image(original_image_fp, image_fp, y=max_height)
-                clip = ImageClip(image_fp, duration=audio_clip.duration)
-                clip = clip.set_audio(audio_clip)
-                clips.append(clip)
-
-        title_fp = os.path.join(self.cwd, submission_frames[0][0]['Path'])
-        shutil.copy(title_fp, os.path.join(self.cwd, 'video', 'posttitle.jpg'))
-
-        video_fp = os.path.join(self.cwd, 'video', 'out.mp4') if output_path is None else output_path
-        logger.info('Creating video file %s', video_fp)
-        final_clip = concatenate_videoclips(clips, method='compose')
-        final_clip.write_videofile(
-            video_fp, fps=24, remove_temp=False,
-            temp_audiofile=os.path.join(tmp_folder, 'TMPaudio.mp3')
-        ) # not sure but remove_temp=False is needed
-
-        if os.path.exists(tmp_folder):
-            shutil.rmtree(tmp_folder)
-
-        return video_fp
-"""
 
 if __name__ == '__main__':
     vm = VideoMerger()
