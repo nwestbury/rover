@@ -100,7 +100,7 @@ const fetchAndSave = async (subReddit, postId) => {
     mkdirIfNotExists(rootImgPath);
 
     // Fetch the screenshot from the specified subreddit page
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
 
     const context = browser.defaultBrowserContext();
     await context.overridePermissions('https://www.reddit.com', ['notifications']);
@@ -120,8 +120,10 @@ const fetchAndSave = async (subReddit, postId) => {
     await page.setCookie(...cookies);
 
     const topDivs = `div.SubredditVars-r-${subReddit}`;
-    await page.goto(`https://www.reddit.com/r/${subReddit}/comments/${postId}/?sort=top`,
-                    {waitUntil: 'domcontentloaded'});
+
+    const url = `https://www.reddit.com/r/${subReddit}/comments/${postId}/?sort=top`;
+    console.log(`Going to ${url} ...`)
+    await page.goto(url, {waitUntil: 'domcontentloaded'});
     await page.waitForSelector(`${topDivs}:nth-of-type(2) div`);
     await page.waitFor(500); // Timeout hack to get shit to work (why do I need this?)
 
@@ -153,7 +155,8 @@ const fetchAndSave = async (subReddit, postId) => {
         });
     }, topDivs);
 
-    await page.waitFor(500); // Timeout hack to get shit to work (why do I need this?)
+    console.log(`Waiting for comments to load...`)
+    await page.waitFor(10000); // Timeout hack --> comments are loaded below-the-fold so just wait a while for a bunch to load
 
     // Take screenshot of just the title and upvote buttons
     const titleDiv = await page.evaluateHandle(() => document.querySelector('div[data-test-id="post-content"]').parentElement);
@@ -180,6 +183,8 @@ const fetchAndSave = async (subReddit, postId) => {
     let comment_index = 0;
     let top_level_comment_index = -1;
     let sub_comment_index = 0;
+    
+    console.log(`Found ${comments.length} comments. Processing...`);
     for (var i=0; i<comments.length && comment_index < maxOverallComments && top_level_comment_index < maxTopLevelComments; ++i) {
         const commentHeader = await comments[i].$('div:nth-of-type(2) > div:nth-of-type(1) > span:last-of-type');
         const svgIcon = await comments[i].$('div:nth-of-type(2) > div:nth-of-type(1) > svg');
@@ -256,6 +261,8 @@ const fetchAndSave = async (subReddit, postId) => {
 
         ++comment_index;
     }
+
+    console.log(`Successfully got ${rows.length-1} comments. ${top_level_comment_index+1} top level comments`)
 
     // Start post scraping (needs to be after comments otherwise there is some clipping issue)
     pars = await page.evaluateHandle(div => div.querySelectorAll('div > p, ul > li'), nodes[4]);

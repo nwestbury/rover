@@ -43,6 +43,8 @@ class RedditVideo():
         self.uploader.upload_thumbnail(thumbnail_path, video_id)
 
     def create_video(self, upload=False):
+        logger.warning('Starting to create video...')
+
         subreddit_info = self.select_subreddit()
         submissions, paths = self.scraper.fetch_and_create_frames(subreddit_info)
         video_path = self.merger.load_frames(paths)

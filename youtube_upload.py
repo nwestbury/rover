@@ -131,7 +131,8 @@ def upload_thumbnail(video_id, file):
     youtube = get_authenticated_service()
     youtube.thumbnails().set(
         videoId=video_id,
-        media_body=file
+        media_body=file,
+        media_mime_type='image/jpeg',
     ).execute()
 
 def resumable_upload(insert_request):

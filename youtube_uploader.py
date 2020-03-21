@@ -9,7 +9,9 @@ class YouTubeUploader():
         upload_thumbnail(video_id, thumbNailPath)
 
     def upload(self, videoPath, postTitle, subReddit, postList, credits={}):
-        title = f'{postTitle} (r/{subReddit} | Reddit Rover)'
+        title = f'{postTitle[:65]} (r/{subReddit[:14]} | Reddit Rover)' # needs to be <= 100 chars
+        title = title.replace('<', '').replace('>', '')
+
         extra_credits = os.linesep + os.linesep.join(f'{key}: {link}' for key, link in credits.items())
 
         description = f'''► {title}

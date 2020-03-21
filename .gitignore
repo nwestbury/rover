@@ -191,6 +191,7 @@ venv.bak/
 img/*
 text/*
 tmp/*
+video/*
 
 # google credentials
 client_secrets.json

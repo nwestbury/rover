@@ -63,7 +63,8 @@ class VideoMerger():
 
         if cwd is not None:
             os.chdir(cwd)
-        print('Command', cmd)
+
+        logger.info('Command: %s', cmd)
         os.system(cmd)
         os.chdir(self.cwd)
 
@@ -94,6 +95,9 @@ class VideoMerger():
 
             largest_height_by_group = self.get_largest_heights(submission)
             last_group = submission[0]['Group']
+
+            if index > 0:
+                clips.append(self.transition_clip_path)
 
             for frame in submission:
                 logger.info('Working on frame %s', frame['Name'])
@@ -133,4 +137,4 @@ class VideoMerger():
 if __name__ == '__main__':
     vm = VideoMerger()
     duration = vm.get_audio_duration('tmp/title.mp3')
-    print('dru', duration)
+    logger.warning('Duration %d', duration)
